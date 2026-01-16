@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #000;
+            --text-color: #0f0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
+            cursor: pointer;
+        }
+
+        .prompt {
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .command-block {
+            margin-bottom: 20px;
+        }
+
+        .command {
+            color: var(--text-color);
+        }
+
+        .output {
+            color: var(--text-color);
+            white-space: pre;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: var(--text-color);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .gear-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.25;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            color: var(--text-color);
+            user-select: none;
+            padding: 10px;
+        }
+
+        .gear-icon:hover {
+            opacity: 0.5;
+        }
+
+        .clear-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 60px;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.25;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            color: var(--text-color);
+            user-select: none;
+            padding: 10px;
+        }
+
+        .clear-icon:hover {
+            opacity: 0.5;
+        }
+
+        .config-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .config-modal.active {
+            display: block;
+        }
+
+        .config-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-color);
+            padding: 20px;
+        }
+
+        .config-header {
+            margin-bottom: 20px;
+        }
+
+        .config-header h2 {
+            color: var(--text-color);
+            font-size: 20px;
+        }
+
+        .theme-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid var(--text-color);
+        }
+
+        .theme-section h3 {
+            color: var(--text-color);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .theme-controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        .theme-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-control label {
+            color: var(--text-color);
+        }
+
+        .theme-control select {
+            background-color: var(--bg-color);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+        }
+
+        .theme-control select option {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .about-section {
+            color: var(--text-color);
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid var(--text-color);
+            line-height: 1.6;
+        }
+
+        .about-section p {
+            margin: 5px 0;
+        }
+
+        .about-section a {
+            color: var(--text-color);
+            text-decoration: underline;
+        }
+
+        .about-section a:hover {
+            opacity: 0.7;
+        }
+
+        .help-toggle {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .help-toggle:hover {
+            opacity: 0.7;
+        }
+
+        .help-content {
+            margin-top: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 5px 15px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .close-btn:hover {
+            opacity: 0.7;
+        }
+
+        .command-pair {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid var(--text-color);
+        }
+
+        .command-pair label {
+            display: block;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+
+        .command-pair input {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 10px;
+        }
+
+        .command-pair textarea {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .remove-pair {
+            background: none;
+            border: 1px solid #f00;
+            color: #f00;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            margin-top: 10px;
+        }
+
+        .remove-pair:hover {
+            background-color: #f00;
+            color: var(--bg-color);
+        }
+
+        .config-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .config-actions button {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .config-actions button:hover {
+            opacity: 0.7;
+        }
+
+        .welcome-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.98);
+            z-index: 3000;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .welcome-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-content {
+            max-width: 600px;
+            background-color: var(--bg-color);
+            border: 2px solid var(--text-color);
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 0 20px var(--text-color);
+        }
+
+        .welcome-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .welcome-header h2 {
+            color: var(--text-color);
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .close-x {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            width: 30px;
+            height: 30px;
+        }
+
+        .close-x:hover {
+            opacity: 0.7;
+        }
+
+        .welcome-body {
+            color: var(--text-color);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .welcome-body p {
+            margin: 10px 0;
+        }
+
+        .welcome-body a {
+            color: var(--text-color);
+            text-decoration: underline;
+        }
+
+        .welcome-body a:hover {
+            opacity: 0.7;
+        }
+
+        .welcome-footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid var(--text-color);
+        }
+
+        .welcome-footer input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .welcome-footer label {
+            color: var(--text-color);
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="prompt">user@terminal:~$ <span class="cursor"></span></div>
+
+    <!-- Clear Screen Icon -->
+    <div class="clear-icon" id="clearIcon">🗑</div>
+    
+    <!-- Gear Icon -->
+    <div class="gear-icon" id="gearIcon">⚙</div>
+
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="welcome-content">
+            <div class="welcome-header">
+                <h2>Welcome to Terminal Emulator</h2>
+                <button class="close-x" id="closeWelcome">×</button>
+            </div>
+            <div class="welcome-body">
+                <p>By Jakub Suchy &lt;<a href="mailto:jakub@allthingsdemo.com">jakub@allthingsdemo.com</a>&gt; - I create custom Interactive Demos.</p>
+                <p>Make easy <a href="https://navattic.com?utm_source=allthingsdemo_terminal" target="_blank">Navattic</a> shell interactive demos</p>
+                <p><strong>Features:</strong></p>
+                <p>• Predictable div IDs for easy targeting</p>
+                <p>• Each command & output is a unique div</p>
+                <p>• Configurable command/output pairs</p>
+                <p>• Click anywhere to cycle through commands</p>
+                <p>• Use the gear icon (⚙) in the bottom right for settings</p>
+                <p>• Use the trash icon (🗑) to clear the screen</p>
+            </div>
+            <div class="welcome-footer">
+                <input type="checkbox" id="dontShowAgain">
+                <label for="dontShowAgain">Don't show this again</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Config Modal -->
+    <div class="config-modal" id="configModal">
+        <div class="config-content">
+            <div class="config-header">
+                <h2>Terminal Configuration</h2>
+            </div>
+            <div class="theme-section">
+                <h3>Theme</h3>
+                <div class="theme-controls">
+                    <div class="theme-control">
+                        <label>Background:</label>
+                        <select id="bgTheme">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                        </select>
+                    </div>
+                    <div class="theme-control">
+                        <label>Text:</label>
+                        <select id="textTheme">
+                            <option value="black">Black</option>
+                            <option value="white">White</option>
+                            <option value="green" selected>Green</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="about-section">
+                <p>By Jakub Suchy &lt;<a href="mailto:jakub@allthingsdemo.com">jakub@allthingsdemo.com</a>&gt;</p>
+                <p>Make easy <a href="https://navattic.com?utm_source=allthingsdemo_terminal" target="_blank">Navattic</a> shell interactive demos</p>
+                <button id="toggleHelp" class="help-toggle">Show Help</button>
+                <div id="helpContent" class="help-content" style="display: none;">
+                    <p style="margin-top: 15px;"><strong>Features:</strong></p>
+                    <p>• Predictable div IDs for easy targeting</p>
+                    <p>• Each command & output is a unique div</p>
+                    <p>• Configurable command/output pairs</p>
+                    <p>• Click anywhere to cycle through commands</p>
+                    <p>• Use the gear icon (⚙) in the bottom right for settings</p>
+                    <p>• Use the trash icon (🗑) to clear the screen</p>
+                </div>
+            </div>
+            <div id="commandPairs"></div>
+            <div class="config-actions">
+                <button id="addPair">Add Command Pair</button>
+                <button id="saveConfig">Save Configuration</button>
+                <button id="resetConfig">Reset to Default</button>
+                <button class="close-btn" id="closeConfig">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+        let commandPairs = [];
+        let currentTheme = {
+            background: 'dark',
+            text: 'green'
+        };
+
+        // Generate unique ID
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        // Apply theme to page
+        function applyTheme() {
+            const bgColor = currentTheme.background === 'dark' ? '#000' : '#fff';
+            const textColor = currentTheme.text === 'green' ? '#0f0' : 
+                            currentTheme.text === 'white' ? '#fff' : '#000';
+            
+            document.documentElement.style.setProperty('--bg-color', bgColor);
+            document.documentElement.style.setProperty('--text-color', textColor);
+        }
+
+        // Load theme from localStorage
+        function loadTheme() {
+            const saved = localStorage.getItem('terminalTheme');
+            if (saved) {
+                try {
+                    currentTheme = JSON.parse(saved);
+                } catch (e) {
+                    currentTheme = { background: 'dark', text: 'green' };
+                }
+            }
+            applyTheme();
+        }
+
+        // Save theme to localStorage
+        function saveTheme() {
+            localStorage.setItem('terminalTheme', JSON.stringify(currentTheme));
+        }
+
+        // Validate theme combination
+        function isValidTheme(bg, text) {
+            if (bg === 'light' && text === 'white') return false;
+            if (bg === 'dark' && text === 'black') return false;
+            return true;
+        }
+
+        // Default commands
+        const defaultCommands = [
+            {
+                id: generateId(),
+                command: 'ls',
+                output: `Click_Anywhere_to_Continue
+Use_Gear_Bottom_Right_for_Settings
+Documents
+Downloads`
+            },
+            {
+                id: generateId(),
+                command: 'ls -l',
+                output: `total 48
+drwxr-xr-x  2 user user 4096 Jan 15 10:23 Documents
+drwxr-xr-x  2 user user 4096 Jan 15 09:45 Downloads
+drwxr-xr-x  2 user user 4096 Jan 14 14:32 Pictures
+drwxr-xr-x  2 user user 4096 Jan 13 08:15 Music
+drwxr-xr-x  2 user user 4096 Jan 12 16:47 Videos
+drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
+-rw-r--r--  1 user user 2048 Jan 15 13:56 notes.txt
+-rw-r--r--  1 user user 1024 Jan 14 09:30 readme.md`
+            }
+        ];
+
+        // Load configuration from localStorage or use defaults
+        function loadConfig() {
+            const saved = localStorage.getItem('terminalConfig');
+            if (saved) {
+                try {
+                    commandPairs = JSON.parse(saved);
+                    // Ensure all pairs have IDs (for backwards compatibility)
+                    commandPairs.forEach(pair => {
+                        if (!pair.id) {
+                            pair.id = generateId();
+                        }
+                    });
+                } catch (e) {
+                    commandPairs = [...defaultCommands];
+                }
+            } else {
+                commandPairs = [...defaultCommands];
+            }
+        }
+
+        // Save configuration to localStorage
+        function saveConfig() {
+            localStorage.setItem('terminalConfig', JSON.stringify(commandPairs));
+        }
+
+        // Render command pairs in config modal
+        function renderConfigPairs() {
+            const container = document.getElementById('commandPairs');
+            container.innerHTML = '';
+            
+            commandPairs.forEach((pair, index) => {
+                const pairDiv = document.createElement('div');
+                pairDiv.className = 'command-pair';
+                pairDiv.innerHTML = `
+                    <label>Command:</label>
+                    <input type="text" class="command-input" data-index="${index}" value="${pair.command || ''}">
+                    <label>Output:</label>
+                    <textarea class="output-input" data-index="${index}">${pair.output || ''}</textarea>
+                    <button class="remove-pair" data-index="${index}">Remove</button>
+                `;
+                container.appendChild(pairDiv);
+            });
+
+            // Add event listeners for inputs
+            document.querySelectorAll('.command-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    commandPairs[index].command = e.target.value;
+                });
+            });
+
+            document.querySelectorAll('.output-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    commandPairs[index].output = e.target.value;
+                });
+            });
+
+            document.querySelectorAll('.remove-pair').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    commandPairs.splice(index, 1);
+                    renderConfigPairs();
+                });
+            });
+        }
+
+        // Initialize
+        loadTheme();
+        loadConfig();
+
+        // Set theme select values
+        document.getElementById('bgTheme').value = currentTheme.background;
+        document.getElementById('textTheme').value = currentTheme.text;
+
+        // Theme change handlers with validation
+        document.getElementById('bgTheme').addEventListener('change', (e) => {
+            const newBg = e.target.value;
+            const currentText = document.getElementById('textTheme').value;
+            
+            if (!isValidTheme(newBg, currentText)) {
+                // Auto-adjust text color to make it valid
+                if (newBg === 'light') {
+                    document.getElementById('textTheme').value = 'black';
+                    currentTheme.text = 'black';
+                } else {
+                    document.getElementById('textTheme').value = 'white';
+                    currentTheme.text = 'white';
+                }
+            }
+            
+            currentTheme.background = newBg;
+            saveTheme();
+            applyTheme();
+        });
+
+        document.getElementById('textTheme').addEventListener('change', (e) => {
+            const newText = e.target.value;
+            const currentBg = document.getElementById('bgTheme').value;
+            
+            if (!isValidTheme(currentBg, newText)) {
+                alert('Invalid color combination! Light background needs dark text, and dark background needs light text.');
+                // Revert to previous value
+                e.target.value = currentTheme.text;
+                return;
+            }
+            
+            currentTheme.text = newText;
+            saveTheme();
+            applyTheme();
+        });
+
+        // Check if welcome modal should be shown
+        function checkWelcomeModal() {
+            const dontShow = localStorage.getItem('terminalWelcomeDontShow');
+            if (!dontShow) {
+                document.getElementById('welcomeModal').classList.add('active');
+            }
+        }
+
+        // Show welcome modal on first load
+        checkWelcomeModal();
+
+        // Close welcome modal
+        document.getElementById('closeWelcome').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dontShow = document.getElementById('dontShowAgain').checked;
+            if (dontShow) {
+                localStorage.setItem('terminalWelcomeDontShow', 'true');
+            }
+            document.getElementById('welcomeModal').classList.remove('active');
+        });
+
+        // Also close welcome modal if clicking outside
+        document.getElementById('welcomeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'welcomeModal') {
+                const dontShow = document.getElementById('dontShowAgain').checked;
+                if (dontShow) {
+                    localStorage.setItem('terminalWelcomeDontShow', 'true');
+                }
+                document.getElementById('welcomeModal').classList.remove('active');
+            }
+        });
+
+        // Display first command on page load
+        function displayFirstCommand() {
+            if (commandPairs.length === 0) return;
+
+            // Remove the initial prompt
+            const initialPrompt = document.querySelector('.prompt');
+            if (initialPrompt) {
+                const cursor = initialPrompt.querySelector('.cursor');
+                if (cursor) cursor.remove();
+            }
+
+            // Get first command pair
+            const firstPair = commandPairs[0];
+
+            // Create command block
+            const commandBlock = document.createElement('div');
+            commandBlock.className = 'command-block';
+            commandBlock.id = `command-block-${firstPair.id}`;
+
+            // Add command
+            const commandDiv = document.createElement('div');
+            commandDiv.className = 'command';
+            commandDiv.id = `command-${firstPair.id}`;
+            commandDiv.textContent = `user@terminal:~$ ${firstPair.command}`;
+            commandBlock.appendChild(commandDiv);
+
+            // Add output lines
+            const outputLines = firstPair.output.split('\n');
+            outputLines.forEach((line, lineIndex) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'output';
+                lineDiv.id = `output-line-${firstPair.id}-${lineIndex}`;
+                lineDiv.textContent = line;
+                commandBlock.appendChild(lineDiv);
+            });
+
+            // Insert after initial prompt
+            if (initialPrompt) {
+                initialPrompt.after(commandBlock);
+            }
+
+            // Add new prompt with cursor
+            const newPrompt = document.createElement('div');
+            newPrompt.className = 'prompt';
+            newPrompt.innerHTML = 'user@terminal:~$ <span class="cursor"></span>';
+            commandBlock.after(newPrompt);
+
+            clickCount++;
+        }
+
+        // Display first command on load
+        displayFirstCommand();
+
+        // Terminal click handler
+        document.body.addEventListener('click', function(e) {
+            // Don't trigger if clicking on gear icon, clear icon, or modal
+            if (e.target.closest('.gear-icon') || e.target.closest('.clear-icon') || e.target.closest('.config-modal')) {
+                return;
+            }
+
+            // Remove cursor from current prompt
+            const cursor = document.querySelector('.cursor');
+            if (cursor) {
+                cursor.remove();
+            }
+
+            // Get current command pair (cycle through available pairs)
+            const pairIndex = clickCount % commandPairs.length;
+            const currentPair = commandPairs[pairIndex];
+
+            // Create new command block
+            const commandBlock = document.createElement('div');
+            commandBlock.className = 'command-block';
+            commandBlock.id = `command-block-${currentPair.id}`;
+
+            // Add command
+            const commandDiv = document.createElement('div');
+            commandDiv.className = 'command';
+            commandDiv.id = `command-${currentPair.id}`;
+            commandDiv.textContent = `user@terminal:~$ ${currentPair.command}`;
+            commandBlock.appendChild(commandDiv);
+
+            // Add output - split into lines, each with unique ID
+            const outputLines = currentPair.output.split('\n');
+            outputLines.forEach((line, lineIndex) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'output';
+                lineDiv.id = `output-line-${currentPair.id}-${lineIndex}`;
+                lineDiv.textContent = line;
+                commandBlock.appendChild(lineDiv);
+            });
+
+            // Add to body
+            document.body.appendChild(commandBlock);
+
+            // Add new prompt with cursor
+            const newPrompt = document.createElement('div');
+            newPrompt.className = 'prompt';
+            newPrompt.innerHTML = 'user@terminal:~$ <span class="cursor"></span>';
+            document.body.appendChild(newPrompt);
+
+            // Scroll to bottom
+            window.scrollTo(0, document.body.scrollHeight);
+
+            clickCount++;
+        });
+
+        // Gear icon click
+        document.getElementById('gearIcon').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('configModal').classList.add('active');
+            renderConfigPairs();
+        });
+
+        // Toggle help in config modal
+        document.getElementById('toggleHelp').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const helpContent = document.getElementById('helpContent');
+            const toggleBtn = document.getElementById('toggleHelp');
+            if (helpContent.style.display === 'none') {
+                helpContent.style.display = 'block';
+                toggleBtn.textContent = 'Hide Help';
+            } else {
+                helpContent.style.display = 'none';
+                toggleBtn.textContent = 'Show Help';
+            }
+        });
+
+        // Clear screen click
+        document.getElementById('clearIcon').addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Remove all command blocks
+            document.querySelectorAll('.command-block').forEach(block => block.remove());
+            // Remove all prompts except create a new one
+            document.querySelectorAll('.prompt').forEach(prompt => prompt.remove());
+            // Reset click count
+            clickCount = 0;
+            // Add fresh prompt with cursor
+            const newPrompt = document.createElement('div');
+            newPrompt.className = 'prompt';
+            newPrompt.innerHTML = 'user@terminal:~$ <span class="cursor"></span>';
+            document.body.insertBefore(newPrompt, document.getElementById('clearIcon'));
+        });
+
+        // Close modal
+        document.getElementById('closeConfig').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('configModal').classList.remove('active');
+        });
+
+        // Add pair
+        document.getElementById('addPair').addEventListener('click', (e) => {
+            e.stopPropagation();
+            commandPairs.push({ id: generateId(), command: '', output: '' });
+            renderConfigPairs();
+        });
+
+        // Save configuration
+        document.getElementById('saveConfig').addEventListener('click', (e) => {
+            e.stopPropagation();
+            saveConfig();
+            alert('Configuration saved!');
+        });
+
+        // Reset to default
+        document.getElementById('resetConfig').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm('Reset to default configuration?')) {
+                commandPairs = [...defaultCommands];
+                // Generate new IDs for the default commands
+                commandPairs.forEach(pair => {
+                    pair.id = generateId();
+                });
+                saveConfig();
+                renderConfigPairs();
+            }
+        });
+
+        // Prevent clicks inside modal from closing it
+        document.getElementById('configModal').addEventListener('click', (e) => {
+            if (e.target.id === 'configModal') {
+                document.getElementById('configModal').classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
