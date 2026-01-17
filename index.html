@@ -174,9 +174,11 @@
         .about-section {
             color: var(--text-color);
             margin-bottom: 30px;
-            padding: 15px;
-            border: 1px solid var(--text-color);
+            padding: 20px;
+            border: 2px solid var(--text-color);
             line-height: 1.6;
+            background: linear-gradient(135deg, rgba(128, 128, 128, 0.15) 0%, rgba(128, 128, 128, 0.05) 100%);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.15), inset 0 0 30px rgba(255, 255, 255, 0.03);
         }
 
         .about-section p {
@@ -426,6 +428,20 @@
             <div class="config-header">
                 <h2>Terminal Configuration</h2>
             </div>
+            <div class="about-section">
+                <p>By Jakub Suchy &lt;<a href="mailto:jakub@allthingsdemo.com">jakub@allthingsdemo.com</a>&gt; - I create custom Interactive Demos.</p>
+                <p>Make easy <a href="https://navattic.com?utm_source=allthingsdemo_terminal" target="_blank">Navattic</a> shell interactive demos</p>
+                <button id="toggleHelp" class="help-toggle">Show Help</button>
+                <div id="helpContent" class="help-content" style="display: none;">
+                    <p style="margin-top: 15px;"><strong>Features:</strong></p>
+                    <p>• Predictable div IDs for easy targeting</p>
+                    <p>• Each command & output is a unique div</p>
+                    <p>• Configurable command/output pairs</p>
+                    <p>• Click anywhere to cycle through commands</p>
+                    <p>• Use the gear icon (⚙) in the bottom right for settings</p>
+                    <p>• Use the trash icon (🗑) to clear the screen</p>
+                </div>
+            </div>
             <div class="theme-section">
                 <h3>Theme</h3>
                 <div class="theme-controls">
@@ -451,20 +467,6 @@
                 <div class="theme-control" style="width: 100%;">
                     <label>Command Prompt:</label>
                     <input type="text" id="promptInput" style="flex: 1; background-color: var(--bg-color); border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 10px; font-family: 'Courier New', Courier, monospace;">
-                </div>
-            </div>
-            <div class="about-section">
-                <p>By Jakub Suchy &lt;<a href="mailto:jakub@allthingsdemo.com">jakub@allthingsdemo.com</a>&gt; - I create custom Interactive Demos.</p>
-                <p>Make easy <a href="https://navattic.com?utm_source=allthingsdemo_terminal" target="_blank">Navattic</a> shell interactive demos</p>
-                <button id="toggleHelp" class="help-toggle">Show Help</button>
-                <div id="helpContent" class="help-content" style="display: none;">
-                    <p style="margin-top: 15px;"><strong>Features:</strong></p>
-                    <p>• Predictable div IDs for easy targeting</p>
-                    <p>• Each command & output is a unique div</p>
-                    <p>• Configurable command/output pairs</p>
-                    <p>• Click anywhere to cycle through commands</p>
-                    <p>• Use the gear icon (⚙) in the bottom right for settings</p>
-                    <p>• Use the trash icon (🗑) to clear the screen</p>
                 </div>
             </div>
             <div id="commandPairs"></div>
