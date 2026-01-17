@@ -387,7 +387,7 @@
     </style>
 </head>
 <body>
-    <div class="prompt">user@terminal:~$ <span class="cursor"></span></div>
+    <div class="prompt" id="initialPrompt"><span class="cursor"></span></div>
 
     <!-- Clear Screen Icon -->
     <div class="clear-icon" id="clearIcon">🗑</div>
@@ -446,6 +446,13 @@
                     </div>
                 </div>
             </div>
+            <div class="theme-section">
+                <h3>Prompt</h3>
+                <div class="theme-control" style="width: 100%;">
+                    <label>Command Prompt:</label>
+                    <input type="text" id="promptInput" style="flex: 1; background-color: var(--bg-color); border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 10px; font-family: 'Courier New', Courier, monospace;">
+                </div>
+            </div>
             <div class="about-section">
                 <p>By Jakub Suchy &lt;<a href="mailto:jakub@allthingsdemo.com">jakub@allthingsdemo.com</a>&gt; - I create custom Interactive Demos.</p>
                 <p>Make easy <a href="https://navattic.com?utm_source=allthingsdemo_terminal" target="_blank">Navattic</a> shell interactive demos</p>
@@ -477,6 +484,8 @@
             background: 'dark',
             text: 'green'
         };
+        const DEFAULT_PROMPT = 'user@terminal:~$';
+        let currentPrompt = DEFAULT_PROMPT;
 
         // Generate unique ID
         function generateId() {
@@ -509,6 +518,21 @@
         // Save theme to localStorage
         function saveTheme() {
             localStorage.setItem('terminalTheme', JSON.stringify(currentTheme));
+        }
+
+        // Load prompt from localStorage
+        function loadPrompt() {
+            const saved = localStorage.getItem('terminalPrompt');
+            if (saved) {
+                currentPrompt = saved;
+            } else {
+                currentPrompt = DEFAULT_PROMPT;
+            }
+        }
+
+        // Save prompt to localStorage
+        function savePrompt() {
+            localStorage.setItem('terminalPrompt', currentPrompt);
         }
 
         // Validate theme combination
@@ -613,10 +637,24 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
         // Initialize
         loadTheme();
         loadConfig();
+        loadPrompt();
 
         // Set theme select values
         document.getElementById('bgTheme').value = currentTheme.background;
         document.getElementById('textTheme').value = currentTheme.text;
+
+        // Set prompt input value
+        document.getElementById('promptInput').value = currentPrompt;
+
+        // Prompt input change handler
+        document.getElementById('promptInput').addEventListener('input', (e) => {
+            currentPrompt = e.target.value || DEFAULT_PROMPT;
+            savePrompt();
+        });
+
+        // Set initial prompt text
+        const initialPromptEl = document.getElementById('initialPrompt');
+        initialPromptEl.insertBefore(document.createTextNode(currentPrompt + ' '), initialPromptEl.firstChild);
 
         // Theme change handlers with validation
         document.getElementById('bgTheme').addEventListener('change', (e) => {
@@ -710,7 +748,7 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             const commandDiv = document.createElement('div');
             commandDiv.className = 'command';
             commandDiv.id = `command-${firstPair.id}`;
-            commandDiv.textContent = `user@terminal:~$ ${firstPair.command}`;
+            commandDiv.textContent = `${currentPrompt} ${firstPair.command}`;
             commandBlock.appendChild(commandDiv);
 
             // Add output lines
@@ -731,7 +769,7 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             // Add new prompt with cursor
             const newPrompt = document.createElement('div');
             newPrompt.className = 'prompt';
-            newPrompt.innerHTML = 'user@terminal:~$ <span class="cursor"></span>';
+            newPrompt.innerHTML = `${currentPrompt} <span class="cursor"></span>`;
             commandBlock.after(newPrompt);
 
             clickCount++;
@@ -766,7 +804,7 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             const commandDiv = document.createElement('div');
             commandDiv.className = 'command';
             commandDiv.id = `command-${currentPair.id}`;
-            commandDiv.textContent = `user@terminal:~$ ${currentPair.command}`;
+            commandDiv.textContent = `${currentPrompt} ${currentPair.command}`;
             commandBlock.appendChild(commandDiv);
 
             // Add output - split into lines, each with unique ID
@@ -785,7 +823,7 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             // Add new prompt with cursor
             const newPrompt = document.createElement('div');
             newPrompt.className = 'prompt';
-            newPrompt.innerHTML = 'user@terminal:~$ <span class="cursor"></span>';
+            newPrompt.innerHTML = `${currentPrompt} <span class="cursor"></span>`;
             document.body.appendChild(newPrompt);
 
             // Scroll to bottom
@@ -827,7 +865,7 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             // Add fresh prompt with cursor
             const newPrompt = document.createElement('div');
             newPrompt.className = 'prompt';
-            newPrompt.innerHTML = 'user@terminal:~$ <span class="cursor"></span>';
+            newPrompt.innerHTML = `${currentPrompt} <span class="cursor"></span>`;
             document.body.insertBefore(newPrompt, document.getElementById('clearIcon'));
         });
 
@@ -862,6 +900,10 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
                 });
                 saveConfig();
                 renderConfigPairs();
+                // Reset prompt to default
+                currentPrompt = DEFAULT_PROMPT;
+                savePrompt();
+                document.getElementById('promptInput').value = currentPrompt;
             }
         });
 
