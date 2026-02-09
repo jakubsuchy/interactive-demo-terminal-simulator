@@ -493,6 +493,7 @@
                 <button id="addPair">Add Command Pair</button>
                 <button id="saveConfig">Save Configuration</button>
                 <button id="resetConfig">Reset to Default</button>
+                <button id="copyURL">Copy Unique URL</button>
                 <button class="close-btn" id="closeConfig">Close</button>
             </div>
         </div>
@@ -511,6 +512,62 @@
         // Generate unique ID
         function generateId() {
             return Math.random().toString(36).substr(2, 9);
+        }
+
+        // UTF-8 safe base64 encoding
+        function utf8ToBase64(str) {
+            const bytes = new TextEncoder().encode(str);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        function base64ToUtf8(b64) {
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder().decode(bytes);
+        }
+
+        // Build shareable URL from current settings
+        function buildSettingsURL() {
+            const settings = {
+                commands: commandPairs,
+                theme: currentTheme,
+                prompt: currentPrompt
+            };
+            const encoded = utf8ToBase64(JSON.stringify(settings));
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.searchParams.set('settings', encoded);
+            return url.toString();
+        }
+
+        // Load settings from URL query parameter, saving them to localStorage
+        function loadFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const encoded = params.get('settings');
+            if (!encoded) return;
+            try {
+                const settings = JSON.parse(base64ToUtf8(encoded));
+                if (settings.commands) {
+                    localStorage.setItem('terminalConfig', JSON.stringify(settings.commands));
+                }
+                if (settings.theme) {
+                    localStorage.setItem('terminalTheme', JSON.stringify(settings.theme));
+                }
+                if (settings.prompt) {
+                    localStorage.setItem('terminalPrompt', settings.prompt);
+                }
+                // Clean the URL without reloading
+                window.history.replaceState({}, '', window.location.pathname);
+            } catch (e) {
+                console.error('Failed to load settings from URL:', e);
+            }
         }
 
         // Apply theme to page
@@ -655,7 +712,8 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             });
         }
 
-        // Initialize
+        // Initialize — URL settings override localStorage
+        loadFromURL();
         loadTheme();
         loadConfig();
         loadPrompt();
@@ -940,6 +998,18 @@ drwxr-xr-x  5 user user 4096 Jan 16 11:20 projects
             e.stopPropagation();
             saveConfig();
             alert('Configuration saved!');
+        });
+
+        // Copy unique URL
+        document.getElementById('copyURL').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const url = buildSettingsURL();
+            navigator.clipboard.writeText(url).then(() => {
+                alert('URL copied to clipboard!');
+            }, () => {
+                // Fallback: show the URL so user can copy manually
+                prompt('Copy this URL:', url);
+            });
         });
 
         // Reset to default
